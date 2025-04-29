@@ -59,8 +59,8 @@ class FileProcessorServiceTest {
 
         service.processFile(input);
 
-        // Expect: geen verzending
-        verify(jmsTemplate, never()).convertAndSend(anyString(), (Object) any());
+        // Expect: message naar errorQueue
+        verify(jmsTemplate, times(1)).convertAndSend(anyString(), (Object) any());
     }
 
     @Test
@@ -71,8 +71,8 @@ class FileProcessorServiceTest {
 
         service.processFile(input);
 
-        // Expect: geen verzending
-        verify(jmsTemplate, never()).convertAndSend(anyString(), (Object) any());
+        // Expect: message naar errorQueue
+        verify(jmsTemplate, times(1)).convertAndSend(anyString(), (Object) any());
     }
 
 }

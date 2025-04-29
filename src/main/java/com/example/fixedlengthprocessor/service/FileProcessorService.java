@@ -22,8 +22,9 @@ public class FileProcessorService {
 
     private final JmsTemplate jmsTemplate;
     private final ObjectMapper springbootObjectMapper;
-    @Getter
-    private final List<String> skippedLines = new ArrayList<>();
+
+    private static final String MAIN_QUEUE = "univocity.queue";
+    private static final String DEAD_LETTER_QUEUE = "univocity.dlq";
 
     public FileProcessorService(JmsTemplate jmsTemplate, ObjectMapper springbootObjectMapper) {
         this.jmsTemplate = jmsTemplate;
@@ -43,19 +44,21 @@ public class FileProcessorService {
                 try {
                     RecordModel model = new RecordModel(row[0], row[1], row[2], row[3]);
                     String json = springbootObjectMapper.writeValueAsString(model);
-                    jmsTemplate.convertAndSend("univocity.queue", json);
+                    jmsTemplate.convertAndSend(MAIN_QUEUE, json);
                 } catch (Exception e) {
-                    log.warn("Fout bij verwerken regel: {} - {}", Arrays.toString(row), e.getMessage());
-                    skippedLines.add(String.join("", row));
+                    String failedLine = String.join("", row);
+                    log.warn("Verwerken mislukt: {}, reden: {}", Arrays.toString(row), e.getMessage());
+                    jmsTemplate.convertAndSend(DEAD_LETTER_QUEUE, failedLine);
                 }
             } else {
-                log.warn("Overgeslagen regel met onjuist aantal velden: {}", Arrays.toString(row));
-                skippedLines.add(String.join("", row));
+                String invalidLine = String.join("", row);
+                log.warn("Onjuist aantal velden, regel overgeslagen: {}", Arrays.toString(row));
+                jmsTemplate.convertAndSend(DEAD_LETTER_QUEUE, invalidLine);
             }
         }
 
         parser.stopParsing();
-        log.info("Verwerking voltooid. {} regels overgeslagen.", skippedLines.size());
+        log.info("Verwerking afgerond.");
 
     }
 }
