@@ -6,6 +6,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.ClassPathResource;
 
+import java.util.List;
+
 @SpringBootApplication
 public class SpringBootUnivocityApp implements CommandLineRunner {
 
@@ -23,5 +25,7 @@ public class SpringBootUnivocityApp implements CommandLineRunner {
     public void run(String... args) throws Exception {
         var file = new ClassPathResource("csv/input.txt");
         fileProcessorService.processFile(file.getInputStream());
+        List<String> fouten = fileProcessorService.getSkippedLines();
+        fouten.forEach(line -> System.out.println("Overgeslagen: " + line));
     }
 }
