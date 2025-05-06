@@ -1,16 +1,18 @@
 package com.example.fixedlengthprocessor.message;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
-@ToString
+import java.io.Serializable;
+import java.time.Instant;
+
+@Data
 @AllArgsConstructor
-public class DeadLetterMessage {
+@NoArgsConstructor
+public class DeadLetterMessage implements Serializable {
+    private static final long serialVersionUID = 742828825669687194L;
     private String failedLine;
     private String error;
-    private String timestamp;
+    private Instant timestamp;
 }

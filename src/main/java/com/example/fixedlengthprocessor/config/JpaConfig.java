@@ -44,12 +44,12 @@ public class JpaConfig {
     @Bean
     public ModelMapper eocModelMapper() {
 
-        ModelMapper dpaModelMapper = new ModelMapper();
-        dpaModelMapper.getConfiguration()
+        ModelMapper eocModelMapper = new ModelMapper();
+        eocModelMapper.getConfiguration()
                 .setFieldMatchingEnabled(true)
                 .setFieldAccessLevel(org.modelmapper.config.Configuration.AccessLevel.PRIVATE);
 
-        return dpaModelMapper;
+        return eocModelMapper;
     }
 
 }

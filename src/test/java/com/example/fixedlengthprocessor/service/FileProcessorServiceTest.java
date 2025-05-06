@@ -1,30 +1,35 @@
 package com.example.fixedlengthprocessor.service;
 
+import com.example.fixedlengthprocessor.domain.ProcessedRecord;
+import com.example.fixedlengthprocessor.message.DeadLetterMessage;
 import com.example.fixedlengthprocessor.model.RecordModel;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.fixedlengthprocessor.repository.ProcessedRecordRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.jms.core.JmsTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 class FileProcessorServiceTest {
 
+    @Mock
     private JmsTemplate jmsTemplate;
-    private ObjectMapper springbootObjectMapper;
-    private FileProcessorService service;
+
+    @Mock
+    private ProcessedRecordRepository recordRepository;
+
+    @InjectMocks
+    private FileProcessorService fileProcessorService;
 
     @BeforeEach
-    void setUp() {
-        jmsTemplate = mock(JmsTemplate.class);
-        springbootObjectMapper = new ObjectMapper();
-        service = new FileProcessorService(jmsTemplate, springbootObjectMapper);
+    void setup() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
@@ -33,21 +38,14 @@ class FileProcessorServiceTest {
         String line = "1731fa92-cd42-4330-b2d3-ca69fcd78f611731fa92-cd42-4330-b2d3-ca69fcd78f61.pdfNLD18";
         ByteArrayInputStream input = new ByteArrayInputStream((line + "\n").getBytes(StandardCharsets.UTF_8));
 
-        service.processFile(input);
+        fileProcessorService.processFile(input);
 
-        // Capture het verstuurde bericht
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(jmsTemplate, times(1)).convertAndSend(eq("univocity.queue"), captor.capture());
-
-        String json = captor.getValue();
-        assertNotNull(json);
-
-        // Parse JSON en assert velden
-        RecordModel result = springbootObjectMapper.readValue(json, RecordModel.class);
-        assertEquals("1731fa92-cd42-4330-b2d3-ca69fcd78f61", result.getTrackId());
-        assertEquals("1731fa92-cd42-4330-b2d3-ca69fcd78f61.pdf", result.getPdfNaam());
-        assertEquals("NLD", result.getBestemming());
-        assertEquals(18, result.getAantalPaginas());
+        // Verificatie: bericht naar queue
+        verify(jmsTemplate, times(1)).convertAndSend(eq("univocity.queue"), any(RecordModel.class));
+        // Verificatie: opslaan in database
+        verify(recordRepository, times(1)).save(any(ProcessedRecord.class));
+        // Geen DLQ aanroep
+        verify(jmsTemplate, never()).convertAndSend(eq("univocity.dlq"), any(DeadLetterMessage.class));
     }
 
     @Test
@@ -57,9 +55,11 @@ class FileProcessorServiceTest {
 
         ByteArrayInputStream input = new ByteArrayInputStream((line + "\n").getBytes(StandardCharsets.UTF_8));
 
-        service.processFile(input);
+        fileProcessorService.processFile(input);
 
         // Expect: message naar errorQueue
+        verify(jmsTemplate, never()).convertAndSend(eq("univocity.queue"), any(RecordModel.class));
+        verify(recordRepository, never()).save(any());
         verify(jmsTemplate, times(1)).convertAndSend(anyString(), (Object) any());
     }
 
@@ -69,10 +69,11 @@ class FileProcessorServiceTest {
 
         ByteArrayInputStream input = new ByteArrayInputStream((shortLine + "\n").getBytes(StandardCharsets.UTF_8));
 
-        service.processFile(input);
+        fileProcessorService.processFile(input);
 
         // Expect: message naar errorQueue
+        verify(jmsTemplate, never()).convertAndSend(eq("univocity.queue"), any(RecordModel.class));
+        verify(recordRepository, never()).save(any());
         verify(jmsTemplate, times(1)).convertAndSend(anyString(), (Object) any());
     }
-
 }

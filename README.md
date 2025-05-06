@@ -13,6 +13,7 @@ Een Spring Boot applicatie die regels uit een tekstbestand met vaste veldlengtes
 - Verwerking met behulp van **Univocity Parsers**
 - Gebruik van **Lombok** voor boilerplate code (getters/setters)
 - Correcte regels worden als JSON verstuurd naar JMS queue: `univocity.queue`
+- Opslaan van correcte records in PostgreSQL
 - Foutieve regels (bijvoorbeeld invalid integers of onjuiste lengte) worden:
     - Verstuurd als JSON naar `univocity.dlq`
     - Bevatten foutmelding en timestamp
@@ -42,6 +43,9 @@ mvn spring-boot:run
 
 - Spring Boot
 - Spring JMS
+- Spring Data JPA (`CrudRepository`)
+- PostgreSQL
+- Liquibase
 - Univocity Parsers (voor fixed-width parsing)
 - Jackson (JSON serialisatie)
 - Lombok
