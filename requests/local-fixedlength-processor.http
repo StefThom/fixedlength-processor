@@ -1,0 +1,149 @@
+###
+### Test ik ophalen records met een geldige accept
+###
+GET {{api-url}}/fixedlength-processor/ophalenRecord
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+###
+### Test ik het opvoeren van een records zonder alle verplichte velden
+###
+POST {{api-url}}fixedlength-processor/toevoegenRecord
+Accept: application/json
+Content-Type: application/json
+
+{
+  "naam": "TST25-1",
+  "productVorm": "Diskette"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 400, "Response status is not 400");
+    });
+
+%}
+
+###
+### Test ik het opvoeren van een records met naam TST25-1
+###
+POST {{api-url}}/fixedlength-processor/toevoegenRecord
+Accept: application/json
+Content-Type: application/json
+
+{
+  "naam": "TST25-1",
+  "deliveryOption": "post",
+  "productVorm": "radio"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.global.set("record-id", response.body.id);
+        client.log("Saved record-id.");
+    });
+
+%}
+
+###
+### Test ik het verwijderen van het hierboven opgevoerde en daarna opgehaalde record
+###
+DELETE {{api-url}}//verwijderenRecord/{{record-id}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+
+%}
+
+###
+### Test ik het opvoeren van een record
+###
+POST {{api-url}}//toevoegenRecord
+Accept: application/json
+Content-Type: application/json
+
+{
+  "naam": "TST99-9",
+  "deliveryOption": "post",
+  "productVorm": "radio"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.global.set("record-id", response.body.id);
+        client.log("Saved record-id.");
+    });
+
+%}
+
+###
+### Test ik het wijzigen van het hierboven opgevoerde record
+###
+POST {{api-url}}//wijzigenRecord/{{record-id}}
+Accept: application/json
+Content-Type: application/json
+
+{
+  "naam": "TST99-9",
+  "deliveryOption": "post",
+  "productVorm": "radio"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.deliveryOption === "post", "Response deliveryOption is not post");
+        client.global.set("deliveryOption", response.body.deliveryOption);
+        client.log("Saved deliveryOption.");
+    });
+
+%}
+
+###
+### Test ik het ophalen van een record met id
+###
+GET {{api-url}}//ophalenRecord/{{record-id}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.deliveryOption === "post", "Response deliveryOption is not post");
+        client.global.set("deliveryOption", response.body.deliveryOption);
+        client.log("Saved deliveryOption.");
+    });
+
+%}
+
+###
+### Test ik het verwijderen van het hierboven opgevoerde en daarna gewijzigde record
+###
+DELETE {{api-url}}//verwijderenRecord/{{record-id}}
+Accept: application/json
+Content-Type: application/json
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+
+%}
